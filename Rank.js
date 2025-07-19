@@ -6,7 +6,6 @@ var cookie = "_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-
 
 /*INSERT GROUP ID AND COOKIE ABOVE*/
 
-
 const express = require("express");
 const rbx = require("noblox.js");
 const app = express();
@@ -20,14 +19,30 @@ async function startApp() {
 }
 startApp();
 
-app.get("/ranker", (req, res) => {
-    var User = req.param("userid");
-    var Rank = req.param("rank");
-  
-    rbx.setRank(groupId, parseInt(User), parseInt(Rank));
-    res.json("Ranked!");
-});
+app.get("/ranker", async (req, res) => {
+  try {
+    // Get 'userid' and 'rank' from query parameters
+    var userId = req.query.userid;
+    var rank = req.query.rank;
 
-const listener = app.listen(process.env.PORT, () => {
-  console.log("Your app is listening on port " + listener.address().port);
+    if (!userId || !rank) {
+      return res.status(400).json({ message: "Missing required parameters" });
+    }
+
+    // Validate and parse the 'userid' and 'rank'
+    userId = parseInt(userId);
+    rank = parseInt(rank);
+
+    if (isNaN(userId) || isNaN(rank)) {
+      return res.status(400).json({ message: "Invalid userId or rank" });
+    }
+
+    // Set the rank for the user
+    await rbx.setRank(groupId, userId, rank);
+
+    res.json({ message: "User ranked successfully!" });
+  } catch (error) {
+    console.error("Error setting rank:", error); // Log the error to the console
+    res.status(500).json({ message: "Failed to rank user", error: error.message });
+  }
 });
